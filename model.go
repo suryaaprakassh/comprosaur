@@ -4,13 +4,25 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+const listHeight = 40
+
+var (
+	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
+	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#feb129"))
+	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
+	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
+	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
 
 type model struct {
 	cwd    *Cwd
-	cursor int
 	status string
 }
 
@@ -18,38 +30,9 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) handleKeys(key string) (tea.Model, tea.Cmd) {
-	switch key {
-	case "q":
-		return m, tea.Quit
-	case "l":
-		m.cwd.selectChild(m.cursor)
-		m.cursor = 0
-	case "h":
-		if err := m.cwd.moveBack(); err != nil {
-			m.status = err.Error()
-		}
-	case "j":
-		m.cursor += 1
-		m.cursor += len(m.cwd.Children)
-		m.cursor %= len(m.cwd.Children)
-	case "k":
-		m.cursor -= 1
-		m.cursor += len(m.cwd.Children)
-		m.cursor %= len(m.cwd.Children)
-	}
-	return m, nil
-}
-
 func (m model) View() string {
 	s := fmt.Sprintf("DIR: %s\n\n", m.cwd.path)
-	for idx, child := range m.cwd.Children {
-		if idx == m.cursor {
-			s += fmt.Sprintf("%s %s\n", ">", child.String())
-		} else {
-			s += fmt.Sprintf("%s %s\n", " ", child.String())
-		}
-	}
+	s += m.cwd.Children.View()
 	s += fmt.Sprintf("\n\nSTATUS: %s\n", m.status)
 	return s
 }
@@ -57,10 +40,18 @@ func (m model) View() string {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.status = ""
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.cwd.Children.SetWidth(msg.Width)
+		return m, nil
 	case tea.KeyMsg:
-		return m.handleKeys(msg.String())
+		switch msg.String() {
+		case "q":
+			return m,tea.Quit
+		}
 	}
-	return m, nil
+	var cmd tea.Cmd
+	m.cwd.Children, cmd = m.cwd.Children.Update(msg)
+	return m , cmd
 }
 
 func initialModel() model {
@@ -68,9 +59,8 @@ func initialModel() model {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return model{
-		cursor: 0,
 		cwd:    cwd,
 	}
 }
-
