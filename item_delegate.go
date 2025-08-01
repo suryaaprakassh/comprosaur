@@ -23,9 +23,22 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	str := fmt.Sprintf("%s", i.String())
 
 	fn := itemStyle.Render
+
+	if i.Marked {
+		fn = func(s...string) string {
+			return  markedItemStyle.Render("• " + strings.Join(s," "))
+		}
+	}
+	// Heirarchy is important 
 	if index == m.Index() {
 		fn = func(s ...string) string {
 			return selectedItemStyle.Render("> " + strings.Join(s, " "))
+		}
+	}
+
+	if index == m.Index() && i.Marked {
+		fn = func(s ...string) string {
+			return markedItemStyle.Render("> " + strings.Join(s, " "))
 		}
 	}
 

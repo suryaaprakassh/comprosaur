@@ -1,7 +1,11 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"os"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 )
 
@@ -23,6 +27,8 @@ const (
 type FileType struct {
 	Name string
 	Kind FileKind
+
+	Marked bool
 }
 
 func NewFileType(name string, isDir bool) FileType {
@@ -52,6 +58,41 @@ type Cwd struct {
 	path     string
 	Children list.Model
 	length   int 
+}
+
+func (c *Cwd) moveForward() error {
+	item, ok := c.Children.SelectedItem().(FileType)
+	if !ok {
+		return errors.New("Could Not Select Item!")
+	}
+	if item.Kind != Directory{
+		return errors.New("The Item is Not a Directory!")
+	}
+	
+	c.path = fmt.Sprintf("%s/%s",c.path,item.Name)
+
+	return c.populateChildren()
+}
+
+func (c *Cwd) moveBack() error {
+	index := strings.LastIndex(c.path,"/")
+	if index == 0 {
+			return errors.New("Cannot Move Back!")
+	}
+	c.path=c.path[:index]
+
+	return c.populateChildren()
+}
+
+func (c *Cwd) markItem() error {
+	index := c.Children.GlobalIndex()
+	item, ok := c.Children.SelectedItem().(FileType)
+	if !ok {
+		return errors.New("Could Not Select Item!")
+	}
+	item.Marked = !item.Marked
+	c.Children.SetItem(index,item)
+	return nil
 }
 
 func (c *Cwd) populateChildren() error {
