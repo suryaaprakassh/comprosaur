@@ -3,3 +3,6 @@ build:
 
 run: build
 	 ./bin/comprosaur
+
+test:
+	go test -v ./...
