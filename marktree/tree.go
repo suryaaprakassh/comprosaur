@@ -1,7 +1,6 @@
 package marktree
 
 import (
-	"log"
 	"strings"
 )
 
@@ -34,20 +33,24 @@ func (t *Tree) ToggleDir(path string) error {
 			parent = n
 			n = node
 		} else {
+			parent = n
 			n.AddChild(key, true)
 			n, _ = n.children[key]
 		}
 	}
-	n.ToggleMark()
+
+	if parent.IsMarked() {
+		parent.is_marked = false
+		n.is_marked = false
+		return parent.Repopulate(path)
+	}else {
+		n.is_marked = true
+	}
+	
+	//drop the children if the entire directory gets marked
 	if n.IsMarked() {
 		clear(n.children)
 	}
-
-	if !n.IsMarked() && parent.IsMarked() {
-		parent.is_marked = false
-		return parent.Repopulate(path)
-	}
-
 	return nil
 }
 
@@ -60,23 +63,20 @@ func (t *Tree) ToggleFile(path string) error {
 			parent = n
 			n = node
 		} else {
+			parent = n 
 			n.AddChild(key, true)
 			n, _ = n.children[key]
 		}
 	}
+	//making it a file here
+	n.is_dir = false
 	if parent.IsMarked() {
 			n.is_marked = false
+			parent.is_marked = false
+			return parent.Repopulate(path)
 	}else{
 			n.is_marked = true 
 	}
-	//making it a file here
-	n.is_dir = false
-	log.Println(path,n.IsMarked(),"parent=",parent.IsMarked())
-	if !n.IsMarked() && parent.IsMarked() {
-		parent.is_marked = false
-		return parent.Repopulate(path)
-	}
-	log.Println(path,n.IsMarked(),"parent=",parent.IsMarked())
 	return nil
 }
 

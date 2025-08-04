@@ -11,7 +11,7 @@ import (
 func TestTree(t *testing.T) {
 	tree := NewTree()
 	paths := []string{
-		"/foo/bar",
+		"/foo/boo",
 		"/foo/bar/baz",
 	}
 
@@ -77,3 +77,34 @@ func TestInternalDrop(t *testing.T) {
 
 	assert.Equal(t,tree.IsMarked(filepath.Join(tmpDir,fileNames[0])),false)
 } 
+
+
+func TestInternalDropDir(t *testing.T) {
+	tree := NewTree()
+	tmpDir := t.TempDir()
+	
+	fileNames := []string{"a","b","c"}
+	
+	for _,name:= range fileNames{
+		fullPath := filepath.Join(tmpDir,name)	
+		err := os.Mkdir(fullPath,0644)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+
+	tree.ToggleDir(tmpDir)
+	
+	assert.Equal(t,tree.IsMarked(tmpDir),true)
+
+	tree.ToggleDir(filepath.Join(tmpDir,fileNames[0]))
+
+	
+	for _,name := range fileNames[1:] {
+		testFilePath := filepath.Join(tmpDir,name)
+		assert.Equal(t,tree.IsMarked(testFilePath),true)
+	}
+
+	assert.Equal(t,tree.IsMarked(filepath.Join(tmpDir,fileNames[0])),false)
+} 
+

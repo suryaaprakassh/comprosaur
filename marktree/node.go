@@ -28,9 +28,10 @@ func (n *Node) IsMarked() bool {
 func (n *Node) Repopulate(path string) error {
 	index := strings.LastIndex(path,"/")
 	parentPath := path[:index]
-	fileName := path [index:]
+	fileName := path [index+1:]
 
 	files, err := os.ReadDir(parentPath)
+
 	if err != nil {
 		return err
 	}
@@ -39,15 +40,19 @@ func (n *Node) Repopulate(path string) error {
 		if file.Name() == fileName {
 			continue
 		}
-		n.AddChild(file.Name(),file.IsDir())
+		child := n.AddChild(file.Name(),file.IsDir())
+
+		child.is_marked = true
 	}
 
 	return nil
 }
 
-func (n *Node) AddChild(name string, is_dir bool) {
+func (n *Node) AddChild(name string, is_dir bool) *Node {
 	child := NewNode(is_dir)
 	n.children[name] = child
+
+	return child
 } 
 
 func NewNode(is_dir bool) *Node{
