@@ -5,24 +5,51 @@ import (
 	"strings"
 )
 
+type MarkedStatus int
+
+const (
+	Unmarked MarkedStatus = iota
+	Marked
+	Partial
+)
+
 //TODO: optimise the unmarking
 type Node struct {
-	is_marked bool
+	status MarkedStatus	
 	is_dir bool
 
 	children  map[string]*Node
 }
 
-func (n *Node) ToggleMark() {
-	n.is_marked = !n.is_marked
-}
-
-func (n *Node) Mark() {
-	n.is_marked = true
+func (n *Node) Mark(status MarkedStatus) {
+	n.status= status
 }
 
 func (n *Node) IsMarked() bool {
-	return n.is_marked
+	return n.status == Marked
+}
+
+func (n *Node) IsPartial() bool {
+	return n.status == Partial
+}
+
+func (n *Node) IsUnmark() bool {
+	return n.status == Unmarked
+}
+
+func (n *Node) HandleParent(parent *Node,path string) error {
+		if parent.IsMarked() {
+			parent.Mark(Partial)
+			n.Mark(Unmarked)
+			return parent.Repopulate(path)
+		}else {
+			if n. IsMarked() {
+				n.Mark(Unmarked)
+			}else {
+				n.Mark(Marked)
+			}
+		}
+		return nil
 }
 
 func (n *Node) Repopulate(path string) error {
@@ -42,7 +69,7 @@ func (n *Node) Repopulate(path string) error {
 		}
 		child := n.AddChild(file.Name(),file.IsDir())
 
-		child.is_marked = true
+		child.status = Marked
 	}
 
 	return nil
@@ -58,7 +85,7 @@ func (n *Node) AddChild(name string, is_dir bool) *Node {
 func NewNode(is_dir bool) *Node{
 	return &Node{
 		is_dir: is_dir,
-		is_marked: false,
+		status: Unmarked,
 		children: make(map[string]*Node),
 	}
 }

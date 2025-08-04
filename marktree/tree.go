@@ -14,7 +14,7 @@ func (t *Tree) IsMarked(path string) bool {
 		node, ok := n.children[key]
 		if ok {
 			n = node
-			if n.is_dir && n.is_marked {
+			if n.is_dir && n.IsMarked(){
 				return true
 			}
 		} else {
@@ -38,13 +38,9 @@ func (t *Tree) ToggleDir(path string) error {
 			n, _ = n.children[key]
 		}
 	}
-
-	if parent.IsMarked() {
-		parent.is_marked = false
-		n.is_marked = false
-		return parent.Repopulate(path)
-	}else {
-		n.is_marked = true
+	
+	if err := n.HandleParent(parent,path); err != nil {
+		return err
 	}
 	
 	//drop the children if the entire directory gets marked
@@ -70,14 +66,8 @@ func (t *Tree) ToggleFile(path string) error {
 	}
 	//making it a file here
 	n.is_dir = false
-	if parent.IsMarked() {
-			n.is_marked = false
-			parent.is_marked = false
-			return parent.Repopulate(path)
-	}else{
-			n.is_marked = true 
-	}
-	return nil
+
+	return n.HandleParent(parent,path)
 }
 
 func NewTree() *Tree {
