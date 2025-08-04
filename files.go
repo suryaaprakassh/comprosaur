@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/suryaaprakassh/comprosaur/marktree"
 )
 
 type FileKind int
@@ -26,21 +28,22 @@ const (
 
 type FileType struct {
 	Name string
+	Path string
 	Kind FileKind
-
-	Marked bool
 }
 
-func NewFileType(name string, isDir bool) FileType {
+func NewFileType(name string,path string, isDir bool) FileType {
 	if isDir {
 		return FileType{
 			Name: name,
+			Path: path,
 			Kind: Directory,
 		}
 	}
 
 	return FileType{
 		Name: name,
+		Path: path,
 		Kind: File,
 	}
 }
@@ -58,6 +61,9 @@ type Cwd struct {
 	path     string
 	Children list.Model
 	length   int 
+	
+	//tree to track mark status
+	marktree *marktree.Tree
 }
 
 func (c *Cwd) moveForward() error {
@@ -87,10 +93,16 @@ func (c *Cwd) moveBack() error {
 func (c *Cwd) markItem() error {
 	index := c.Children.GlobalIndex()
 	item, ok := c.Children.SelectedItem().(FileType)
+	
+	if item.Kind == File {
+		c.marktree.ToggleFile(item.Path)
+	} else {
+		c.marktree.ToggleDir(item.Path)
+	}
+
 	if !ok {
 		return errors.New("Could Not Select Item!")
 	}
-	item.Marked = !item.Marked
 	c.Children.SetItem(index,item)
 	return nil
 }
@@ -102,7 +114,7 @@ func (c *Cwd) populateChildren() error {
 		return err
 	}
 	for _, child := range files {
-		items = append(items, NewFileType(child.Name(), child.IsDir()))
+		items = append(items, NewFileType(child.Name(), filepath.Join(c.path,child.Name()),child.IsDir()))
 	}
 	_ = c.Children.SetItems(items)
 	return nil
@@ -113,8 +125,12 @@ func NewCwd() (*Cwd, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	marktree := marktree.NewTree()
 	
-	list := list.New(nil,itemDelegate{},20,14)
+	list := list.New(nil,itemDelegate{
+		marktree: marktree,
+	},20,14)
 	list.SetShowStatusBar(false)	
 	list.SetFilteringEnabled(false)
 	list.SetShowTitle(false)
@@ -125,6 +141,7 @@ func NewCwd() (*Cwd, error) {
 		path: path,
 		length: 0,
 		Children: list,
+		marktree: marktree,
 	}
 	if err := c.populateChildren(); err != nil {
 		return nil, err
