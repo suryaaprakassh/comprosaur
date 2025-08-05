@@ -8,6 +8,19 @@ type Tree struct {
 	root *Node
 }
 
+func (t *Tree) IsStatus(path string,status MarkedStatus) bool {
+	n := t.root
+	for key := range strings.SplitSeq(path, "/") {
+		node, ok := n.children[key]
+		if ok {
+			n = node
+		} else {
+			return false
+		}
+	}
+	return n.status == status
+}
+
 func (t *Tree) IsMarked(path string) bool {
 	n := t.root
 	for key := range strings.SplitSeq(path, "/") {
