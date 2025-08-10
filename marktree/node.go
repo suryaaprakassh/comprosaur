@@ -16,6 +16,19 @@ const (
 	Partial
 )
 
+//impl of stringer interface for debug purposes
+func (n MarkedStatus) String() string {
+	switch n {
+	case Unmarked:
+			return "Unmarked"
+	case Marked:
+			return "Marked"
+	case Partial:
+			return "Partial"
+	}
+	panic("Unreachable!")
+}
+
 // TODO: optimise the unmarking
 type Node struct {
 	status MarkedStatus
@@ -25,6 +38,7 @@ type Node struct {
 	item_count    int
 	current_count int
 }
+
 
 func (n *Node) Mark(status MarkedStatus) {
 	n.status = status
@@ -67,7 +81,9 @@ func (n *Node) HandleParent(parent *Node, path string) error {
 	if parent.IsMarked() {
 		parent.current_count -= 1
 		n.Mark(Unmarked)
-		return parent.Repopulate(path)
+		if err := parent.Repopulate(path); err != nil {
+			return err
+		}
 	} else {
 		if n.IsMarked() {
 			parent.current_count -= 1
@@ -77,7 +93,6 @@ func (n *Node) HandleParent(parent *Node, path string) error {
 			n.Mark(Marked)
 		}
 	}
-
 	switch parent.current_count {
 	case parent.item_count:
 		parent.Mark(Marked)
@@ -86,7 +101,6 @@ func (n *Node) HandleParent(parent *Node, path string) error {
 	default:
 		parent.Mark(Partial)
 	}
-
 	return nil
 }
 
@@ -108,9 +122,10 @@ func (n *Node) Repopulate(path string) error {
 
 		childPath := filepath.Join(parentPath, file.Name())
 		child := n.AddChild(file.Name(), file.IsDir(), childPath)
-
 		child.status = Marked
 	}
+	
+	n.current_count= n.item_count - 1
 
 	return nil
 }
@@ -123,11 +138,10 @@ func (n *Node) AddChild(name string, is_dir bool, path string) *Node {
 	if is_dir {
 		files, err := os.ReadDir(path)
 		if err != nil {
-			log.Fatal(path)
+			log.Fatal("Path does not exist",path)
 		}
 		child.item_count = len(files)
 	}
-
 	return child
 }
 

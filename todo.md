@@ -1,0 +1,2 @@
+- [x]  Fix tests coupled with dir
+- [ ]  Set cursor when moving back

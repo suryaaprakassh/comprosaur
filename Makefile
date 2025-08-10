@@ -1,8 +1,10 @@
 build:
-	 go build -o bin/comprosaur .
+	 @ go build -o bin/comprosaur .
 
 run: build
-	 ./bin/comprosaur
+	 @ ./bin/comprosaur
 
 test:
-	go test -v ./...
+	@ go test -v ./... | grep -v "no test files"
+
+.PHONY: test run build

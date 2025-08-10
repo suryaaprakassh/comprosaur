@@ -8,103 +8,133 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type TestDir struct {
+	path string
+}
+
+func NewTestDir(t *testing.T, dirs []string, files []string) *TestDir {
+	tmp := t.TempDir()
+	for _, dir := range dirs {
+		path := filepath.Join(tmp, dir)
+		err := os.MkdirAll(path, 0755)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+	for _, file := range files {
+		path := filepath.Join(tmp, file)
+		_, err := os.Create(path)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+
+	return &TestDir{
+		path: tmp,
+	}
+}
+
+func (t *TestDir) get(path string) string {
+	return filepath.Join(t.path, path)
+}
+
 func TestTree(t *testing.T) {
 	tree := NewTree()
-	paths := []string{
+	dirs := []string{
 		"/foo/boo",
 		"/foo/bar/baz",
 	}
+	files := []string{
+		"/foo/bar/a.txt",
+	}
 
-	for _,path := range paths {
-		tree.ToggleDir(path)
+	tDir := NewTestDir(t, dirs, files)
+
+	for _, path := range dirs {
+		err := tree.ToggleDir(tDir.get(path))
+		assert.NoError(t, err)
 	}
-	for _,path := range paths {
-		assert.Equal(t,tree.IsMarked(path),true)
+
+	for _, path := range dirs {
+		p := tDir.get(path)
+		assert.Equal(t, true, tree.IsMarked(p))
 	}
-	tree.ToggleDir("/foo/bar/a.txt")
-	for _,path := range paths {
-		tree.ToggleDir(path)
+
+	tree.ToggleFile(tDir.get(files[0]))
+
+	for _, path := range dirs {
+		tree.ToggleDir(tDir.get(path))
 	}
-	for _,path := range paths {
-		assert.Equal(t,tree.IsMarked(path),false)
+	for _, path := range dirs {
+		p := tDir.get(path)
+		assert.Equal(t, false, tree.IsMarked(p))
 	}
-	assert.Equal(t,tree.IsMarked("/foo/bar/a.txt"),true)
+	assert.Equal(t, true, tree.IsMarked(tDir.get(files[0])))
 }
-
 
 func TestMarkDrop(t *testing.T) {
 	tree := NewTree()
-	paths := []string{
+	dirs := []string{
 		"/foo/bar/baz",
 		"/foo/bar",
 	}
+	files := []string{
+		"/foo/bar/a.txt",
+	}
+	tDir := NewTestDir(t, dirs, files)
+	for _, path := range dirs {
+		err := tree.ToggleDir(tDir.get(path))
+		assert.NoError(t, err)
+	}
 
-	for _,path := range paths {
-		tree.ToggleDir(path)
+	for _, path := range dirs {
+		p := tDir.get(path)
+		assert.Equal(t, true, tree.IsMarked(p))
 	}
-	for _,path := range paths {
-		assert.Equal(t,tree.IsMarked(path),true)
-	}
-	tree.ToggleDir("/foo")
-	assert.Equal(t,tree.IsMarked("/foo/bar/a.txt"),true)
+
+	tree.ToggleDir(tDir.get("/foo"))
+
+	p := tDir.get(files[0])
+	assert.Equal(t, true, tree.IsMarked(p))
 }
 
 func TestInternalDrop(t *testing.T) {
 	tree := NewTree()
-	tmpDir := t.TempDir()
 
-	fileNames := []string{"a","b","c"}
+	files := []string{"a", "b", "c"}
 
-	for _,name:= range fileNames{
-		fullPath := filepath.Join(tmpDir,name)	
-		err := os.WriteFile(fullPath,nil,0644)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+	tDir := NewTestDir(t, nil, files)
+
+	tree.ToggleDir(tDir.path)
+	assert.Equal(t, true, tree.IsMarked(tDir.path))
+
+	tree.ToggleFile(tDir.get(files[0]))
+
+	for _, path := range files[1:] {
+		p := tDir.get(path)
+		assert.Equal(t, true, tree.IsMarked(p))
 	}
 
-	tree.ToggleDir(tmpDir)
-
-	assert.Equal(t,tree.IsMarked(tmpDir),true)
-
-	tree.ToggleFile(filepath.Join(tmpDir,fileNames[0]))
-
-
-	for _,name := range fileNames[1:] {
-		testFilePath := filepath.Join(tmpDir,name)
-		assert.Equal(t,tree.IsMarked(testFilePath),true)
-	}
-
-	assert.Equal(t,tree.IsMarked(filepath.Join(tmpDir,fileNames[0])),false)
-} 
-
+	assert.Equal(t, false, tree.IsMarked(tDir.get(files[0])))
+}
 
 func TestInternalDropDir(t *testing.T) {
 	tree := NewTree()
-	tmpDir := t.TempDir()
 
-	fileNames := []string{"a","b","c"}
+	dirs := []string{"a", "b", "c"}
 
-	for _,name:= range fileNames{
-		fullPath := filepath.Join(tmpDir,name)	
-		err := os.Mkdir(fullPath,0644)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+	tDir := NewTestDir(t, dirs, nil)
+
+	tree.ToggleDir(tDir.path)
+
+	assert.Equal(t, true, tree.IsMarked(tDir.path))
+
+	tree.ToggleDir(tDir.get(dirs[0]))
+
+	for _, path := range dirs[1:] {
+		p := tDir.get(path)
+		assert.Equal(t, true, tree.IsMarked(p))
 	}
 
-	tree.ToggleDir(tmpDir)
-
-	assert.Equal(t,tree.IsMarked(tmpDir),true)
-
-	tree.ToggleDir(filepath.Join(tmpDir,fileNames[0]))
-
-
-	for _,name := range fileNames[1:] {
-		testFilePath := filepath.Join(tmpDir,name)
-		assert.Equal(t,tree.IsMarked(testFilePath),true)
-	}
-
-	assert.Equal(t,tree.IsMarked(filepath.Join(tmpDir,fileNames[0])),false)
-} 
-
+	assert.Equal(t, false, tree.IsMarked(tDir.get(dirs[0])))
+}

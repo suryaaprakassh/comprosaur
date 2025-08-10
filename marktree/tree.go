@@ -65,17 +65,24 @@ func (t *Tree) ToggleDir(path string) error {
 	if err != nil {
 		return err
 	}
+	
+	//sets the current tracking count of the parent to the 
+	// number of elements in the directory
 	if err := n.HandleParent(*parent, path); err != nil {
 		return err
 	}
+
 	path = filepath.Dir(path)
 	n = *parent
 	s.Pop()
+
 	//drop the children if the entire directory gets marked
 	if n.IsMarked() {
-		clear(n.children)
+		n.current_count = n.item_count
 	}
-
+	
+	//recursively set the status of the tree
+	// for partial status 
 	for !s.IsEmpty() {
 		parent, err := s.Top()
 		if err != nil {
@@ -91,9 +98,8 @@ func (t *Tree) ToggleDir(path string) error {
 
 func (t *Tree) ToggleFile(path string) error {
 	n := t.root
-
 	s := stack.New[*Node]()
-
+	
 	parts := strings.Split(path, "/")
 	currPath := "/"
 
@@ -115,6 +121,8 @@ func (t *Tree) ToggleFile(path string) error {
 	if err != nil {
 		return err
 	}
+
+
 	if err := n.HandleParent(*parent, path); err != nil {
 		return err
 	}
