@@ -1,6 +1,7 @@
 package marktree
 
 import (
+	"path/filepath"
 	"strings"
 )
 
@@ -40,14 +41,16 @@ func (t *Tree) IsMarked(path string) bool {
 func (t *Tree) ToggleDir(path string) error {
 	var parent *Node 
 	n := t.root
-	for key := range strings.SplitSeq(path, "/") {
+	currPath := "/"
+	for key := range strings.SplitSeq(path,"/") {
 		node, ok := n.children[key]
+		filepath.Join(currPath,key)
 		if ok {
 			parent = n
 			n = node
 		} else {
 			parent = n
-			n.AddChild(key, true)
+			n.AddChild(key, true,currPath)
 			n, _ = n.children[key]
 		}
 	}
@@ -66,26 +69,29 @@ func (t *Tree) ToggleDir(path string) error {
 func (t *Tree) ToggleFile(path string) error {
 	var parent *Node
 	n := t.root
-	for key := range strings.SplitSeq(path, "/") {
+	parts := strings.Split(path,"/")
+	currPath := "/"
+
+	for idx,key := range parts {
 		node, ok := n.children[key]
+
+		filepath.Join(currPath,key)
 		if ok {
 			parent = n
 			n = node
 		} else {
 			parent = n 
-			n.AddChild(key, true)
+			n.AddChild(key, idx+ 1 != len(parts) ,currPath)
 			n, _ = n.children[key]
 		}
 	}
-	//making it a file here
-	n.is_dir = false
-
 	return n.HandleParent(parent,path)
 }
 
 func NewTree() *Tree {
 	//Creating tree with root dir
 	//TODO: change later
+	//TODO: item_count of root dir is intentionally set to zero
 	return &Tree{
 		root: NewNode(true),
 	}

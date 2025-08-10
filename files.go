@@ -30,7 +30,6 @@ type FileType struct {
 	Name string
 	Path string
 	Kind FileKind
-
 }
 
 func NewFileType(name string,path string, isDir bool) FileType {

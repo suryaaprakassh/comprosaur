@@ -2,7 +2,10 @@ package marktree
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
+	
+	"log"
 )
 
 type MarkedStatus int
@@ -19,6 +22,7 @@ type Node struct {
 	is_dir bool
 
 	children  map[string]*Node
+	item_count int
 }
 
 func (n *Node) Mark(status MarkedStatus) {
@@ -45,7 +49,9 @@ func (n *Node) HandleParent(parent *Node,path string) error {
 		}else {
 			if n. IsMarked() {
 				n.Mark(Unmarked)
+				parent.Mark(Unmarked)
 			}else {
+				parent.Mark(Partial)
 				n.Mark(Marked)
 			}
 		}
@@ -67,7 +73,9 @@ func (n *Node) Repopulate(path string) error {
 		if file.Name() == fileName {
 			continue
 		}
-		child := n.AddChild(file.Name(),file.IsDir())
+
+		childPath := filepath.Join(parentPath,file.Name())
+		child := n.AddChild(file.Name(),file.IsDir(),childPath)
 
 		child.status = Marked
 	}
@@ -75,9 +83,18 @@ func (n *Node) Repopulate(path string) error {
 	return nil
 }
 
-func (n *Node) AddChild(name string, is_dir bool) *Node {
+func (n *Node) AddChild(name string, is_dir bool,path string) *Node {
 	child := NewNode(is_dir)
 	n.children[name] = child
+	
+	//callibrating the count of the children for partial status 
+	if is_dir {
+		files, err := os.ReadDir(path)
+		if err != nil {
+			log.Fatal(path)
+		}
+		child.item_count = len(files)
+	}
 
 	return child
 } 
@@ -87,5 +104,6 @@ func NewNode(is_dir bool) *Node{
 		is_dir: is_dir,
 		status: Unmarked,
 		children: make(map[string]*Node),
+		item_count: 0,
 	}
 }
