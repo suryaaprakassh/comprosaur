@@ -1,15 +1,19 @@
 package marktree
 
 import (
+	"log"
+	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/suryaaprakassh/comprosaur/stack"
 )
 
 type Tree struct {
 	root *Node
 }
 
-func (t *Tree) IsStatus(path string,status MarkedStatus) bool {
+func (t *Tree) IsStatus(path string, status MarkedStatus) bool {
 	n := t.root
 	for key := range strings.SplitSeq(path, "/") {
 		node, ok := n.children[key]
@@ -28,7 +32,7 @@ func (t *Tree) IsMarked(path string) bool {
 		node, ok := n.children[key]
 		if ok {
 			n = node
-			if n.is_dir && n.IsMarked(){
+			if n.is_dir && n.IsMarked() {
 				return true
 			}
 		} else {
@@ -39,60 +43,109 @@ func (t *Tree) IsMarked(path string) bool {
 }
 
 func (t *Tree) ToggleDir(path string) error {
-	var parent *Node 
 	n := t.root
+	s := stack.New[*Node]()
+
 	currPath := "/"
-	for key := range strings.SplitSeq(path,"/") {
+	for key := range strings.SplitSeq(path, "/") {
 		node, ok := n.children[key]
-		filepath.Join(currPath,key)
+		currPath = filepath.Join(currPath, key)
+
 		if ok {
-			parent = n
+			s.Push(n)
 			n = node
 		} else {
-			parent = n
-			n.AddChild(key, true,currPath)
+			s.Push(n)
+			n.AddChild(key, true, currPath)
 			n, _ = n.children[key]
 		}
 	}
-	
-	if err := n.HandleParent(parent,path); err != nil {
+
+	parent, err := s.Top()
+	if err != nil {
 		return err
 	}
-	
+	if err := n.HandleParent(*parent, path); err != nil {
+		return err
+	}
+	path = filepath.Dir(path)
+	n = *parent
+	s.Pop()
 	//drop the children if the entire directory gets marked
 	if n.IsMarked() {
 		clear(n.children)
 	}
+
+	for !s.IsEmpty() {
+		parent, err := s.Top()
+		if err != nil {
+			return err
+		}
+		n.HandleRetriggerStatus(*parent)
+		n = *parent
+		s.Pop()
+	}
+
 	return nil
 }
 
 func (t *Tree) ToggleFile(path string) error {
-	var parent *Node
 	n := t.root
-	parts := strings.Split(path,"/")
+
+	s := stack.New[*Node]()
+
+	parts := strings.Split(path, "/")
 	currPath := "/"
 
-	for idx,key := range parts {
+	for idx, key := range parts {
 		node, ok := n.children[key]
+		currPath = filepath.Join(currPath, key)
 
-		filepath.Join(currPath,key)
 		if ok {
-			parent = n
+			s.Push(n)
 			n = node
 		} else {
-			parent = n 
-			n.AddChild(key, idx+ 1 != len(parts) ,currPath)
+			s.Push(n)
+			n.AddChild(key, idx+1 != len(parts), currPath)
 			n, _ = n.children[key]
 		}
 	}
-	return n.HandleParent(parent,path)
+
+	parent, err := s.Top()
+	if err != nil {
+		return err
+	}
+	if err := n.HandleParent(*parent, path); err != nil {
+		return err
+	}
+	path = filepath.Dir(path)
+	n = *parent
+	s.Pop()
+
+	for !s.IsEmpty() {
+		parent, err := s.Top()
+		if err != nil {
+			return err
+		}
+		n.HandleRetriggerStatus(*parent)
+		n = *parent
+		s.Pop()
+	}
+
+	return nil
 }
 
 func NewTree() *Tree {
 	//Creating tree with root dir
 	//TODO: change later
-	//TODO: item_count of root dir is intentionally set to zero
-	return &Tree{
+	t := &Tree{
 		root: NewNode(true),
 	}
+
+	dirs, err := os.ReadDir("/")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	t.root.item_count = len(dirs)
+	return t
 }

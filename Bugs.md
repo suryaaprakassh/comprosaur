@@ -1,0 +1,2 @@
+- cannot toggle file inside the bin dir
+- cannot make partial go away when parent is toggled

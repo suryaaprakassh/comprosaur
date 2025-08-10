@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	
+
 	"log"
 )
 
@@ -16,17 +16,18 @@ const (
 	Partial
 )
 
-//TODO: optimise the unmarking
+// TODO: optimise the unmarking
 type Node struct {
-	status MarkedStatus	
+	status MarkedStatus
 	is_dir bool
 
-	children  map[string]*Node
-	item_count int
+	children      map[string]*Node
+	item_count    int
+	current_count int
 }
 
 func (n *Node) Mark(status MarkedStatus) {
-	n.status= status
+	n.status = status
 }
 
 func (n *Node) IsMarked() bool {
@@ -41,27 +42,58 @@ func (n *Node) IsUnmark() bool {
 	return n.status == Unmarked
 }
 
-func (n *Node) HandleParent(parent *Node,path string) error {
-		if parent.IsMarked() {
-			parent.Mark(Partial)
+func (n *Node) HandleRetriggerStatus(parent *Node) {
+	if n.IsMarked() {
+		parent.current_count += 1
+	} else if n.IsUnmark() {
+		parent.current_count -= 1
+	}
+
+	if n.IsPartial() {
+		parent.Mark(Partial)
+		return
+	}
+
+	if parent.item_count == parent.current_count {
+		parent.Mark(Marked)
+	} else if parent.current_count == 0 {
+		parent.Mark(Unmarked)
+	} else {
+		parent.Mark(Partial)
+	}
+}
+
+func (n *Node) HandleParent(parent *Node, path string) error {
+	if parent.IsMarked() {
+		parent.current_count -= 1
+		n.Mark(Unmarked)
+		return parent.Repopulate(path)
+	} else {
+		if n.IsMarked() {
+			parent.current_count -= 1
 			n.Mark(Unmarked)
-			return parent.Repopulate(path)
-		}else {
-			if n. IsMarked() {
-				n.Mark(Unmarked)
-				parent.Mark(Unmarked)
-			}else {
-				parent.Mark(Partial)
-				n.Mark(Marked)
-			}
+		} else {
+			parent.current_count += 1
+			n.Mark(Marked)
 		}
-		return nil
+	}
+
+	switch parent.current_count {
+	case parent.item_count:
+		parent.Mark(Marked)
+	case 0:
+		parent.Mark(Unmarked)
+	default:
+		parent.Mark(Partial)
+	}
+
+	return nil
 }
 
 func (n *Node) Repopulate(path string) error {
-	index := strings.LastIndex(path,"/")
+	index := strings.LastIndex(path, "/")
 	parentPath := path[:index]
-	fileName := path [index+1:]
+	fileName := path[index+1:]
 
 	files, err := os.ReadDir(parentPath)
 
@@ -74,8 +106,8 @@ func (n *Node) Repopulate(path string) error {
 			continue
 		}
 
-		childPath := filepath.Join(parentPath,file.Name())
-		child := n.AddChild(file.Name(),file.IsDir(),childPath)
+		childPath := filepath.Join(parentPath, file.Name())
+		child := n.AddChild(file.Name(), file.IsDir(), childPath)
 
 		child.status = Marked
 	}
@@ -83,11 +115,11 @@ func (n *Node) Repopulate(path string) error {
 	return nil
 }
 
-func (n *Node) AddChild(name string, is_dir bool,path string) *Node {
+func (n *Node) AddChild(name string, is_dir bool, path string) *Node {
 	child := NewNode(is_dir)
 	n.children[name] = child
-	
-	//callibrating the count of the children for partial status 
+
+	//callibrating the count of the children for partial status
 	if is_dir {
 		files, err := os.ReadDir(path)
 		if err != nil {
@@ -97,13 +129,14 @@ func (n *Node) AddChild(name string, is_dir bool,path string) *Node {
 	}
 
 	return child
-} 
+}
 
-func NewNode(is_dir bool) *Node{
+func NewNode(is_dir bool) *Node {
 	return &Node{
-		is_dir: is_dir,
-		status: Unmarked,
-		children: make(map[string]*Node),
-		item_count: 0,
+		is_dir:        is_dir,
+		status:        Unmarked,
+		children:      make(map[string]*Node),
+		item_count:    0,
+		current_count: 0,
 	}
 }
