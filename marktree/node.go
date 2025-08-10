@@ -67,7 +67,9 @@ func (n *Node) HandleParent(parent *Node, path string) error {
 	if parent.IsMarked() {
 		parent.current_count -= 1
 		n.Mark(Unmarked)
-		return parent.Repopulate(path)
+		if err := parent.Repopulate(path); err != nil {
+			return err
+		}
 	} else {
 		if n.IsMarked() {
 			parent.current_count -= 1
@@ -80,6 +82,7 @@ func (n *Node) HandleParent(parent *Node, path string) error {
 
 	switch parent.current_count {
 	case parent.item_count:
+		clear(parent.children)
 		parent.Mark(Marked)
 	case 0:
 		parent.Mark(Unmarked)
@@ -108,9 +111,10 @@ func (n *Node) Repopulate(path string) error {
 
 		childPath := filepath.Join(parentPath, file.Name())
 		child := n.AddChild(file.Name(), file.IsDir(), childPath)
-
 		child.status = Marked
 	}
+	
+	n.current_count= n.item_count - 1
 
 	return nil
 }

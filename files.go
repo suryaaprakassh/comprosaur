@@ -61,7 +61,7 @@ type Cwd struct {
 	path     string
 	Children list.Model
 	length   int 
-	
+
 	//tree to track mark status
 	marktree *marktree.Tree
 }
