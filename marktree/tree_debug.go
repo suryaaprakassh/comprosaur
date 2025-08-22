@@ -9,6 +9,9 @@ func (t *Tree) DebugPath(path string){
 	n := t.root
 	sequence := strings.Split(path,"/")
 	for idx,key := range sequence {
+		if key == "" {
+			continue
+		}
 		node, ok := n.children[key]
 		if ok {
 			n = node

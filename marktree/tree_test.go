@@ -138,3 +138,27 @@ func TestInternalDropDir(t *testing.T) {
 
 	assert.Equal(t, false, tree.IsMarked(tDir.get(dirs[0])))
 }
+
+func TestMarkedReturn(t *testing.T) {
+	tree := NewTree()
+	dirs := []string{
+		"/foo/boo",
+		"/foo/bar",
+	}
+	files := []string{
+		"/foo/bar/a.txt",
+		"/foo/bar/b.txt",
+	}
+	tDir := NewTestDir(t, dirs, files)
+	tree.ToggleDir(tDir.get(dirs[0]))
+	tree.ToggleFile(tDir.get(files[0]))
+	markedFiles, isMarked := tree.GetMarkedDirs()
+	assert.True(t, isMarked)
+	assert.Equal(t,1,len(markedFiles))
+	assert.Equal(t, tDir.get(dirs[0]), markedFiles[0])
+
+	markedFiles, isMarked = tree.GetMarkedFiles()
+	assert.True(t, isMarked)
+	assert.Equal(t,1,len(markedFiles))
+	assert.Equal(t, tDir.get(files[0]), markedFiles[0])
+}
