@@ -1,2 +1,5 @@
 - [x]  Fix tests coupled with dir
 - [ ]  Set cursor when moving back
+- [ ]  Change the help menu
+- [ ]  View without extraction
+- [ ]  Password protected things
