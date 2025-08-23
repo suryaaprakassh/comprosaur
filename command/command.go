@@ -1,4 +1,4 @@
-package backend
+package command 
 
 import "os/exec"
 

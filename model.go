@@ -15,13 +15,12 @@ var (
 	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#feb129"))
-	markedItemStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#3399ff"))
+	markedItemStyle   = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#3399ff"))
 	partialItemStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#ff79c6"))
 	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
-
 
 type model struct {
 	cwd    *Cwd
@@ -39,10 +38,10 @@ func (m model) View() string {
 	return s
 }
 
-func (m model) handleErrorCall(fn func() error ) {
-		if err := fn();err != nil {
-			m.status = err.Error()
-		}
+func (m model) handleErrorCall(fn func() error) {
+	if err := fn(); err != nil {
+		m.status = err.Error()
+	}
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -55,18 +54,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q":
-			return m,tea.Quit
+			return m, tea.Quit
 		case "l":
 			m.handleErrorCall(m.cwd.moveForward)
 		case "h":
 			m.handleErrorCall(m.cwd.moveBack)
 		case "m":
 			m.handleErrorCall(m.cwd.markItem)
+		case "c":
+			m.handleErrorCall(m.cwd.compressSelected)
 		}
 	}
 	var cmd tea.Cmd
 	m.cwd.Children, cmd = m.cwd.Children.Update(msg)
-	return m , cmd
+	return m, cmd
 }
 
 func initialModel() model {
@@ -76,6 +77,6 @@ func initialModel() model {
 	}
 
 	return model{
-		cwd:    cwd,
+		cwd: cwd,
 	}
 }

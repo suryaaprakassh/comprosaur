@@ -1,4 +1,4 @@
-package backend
+package command 
 
 import (
 	"testing"
@@ -11,5 +11,5 @@ func TestBuilder(t *testing.T) {
 		Arg("-a").
 		Args("-b", "-c").
 		Build()
-	assert.Equal(t, []string{"test","-a", "-b", "-c"}, builder.Args)
+		assert.Equal(t, []string{"test","-a", "-b", "-c"}, builder.Args)
 }
