@@ -12,8 +12,12 @@ type Context struct {
 	logger *slog.Logger
 }
 
-func (c *Context) UpdatePath(path string) {
+func (c *Context) AppendPath(path string) {
 	c.path = filepath.Join(c.path, path)
+}
+
+func (c *Context) UpdatePath(path string) {
+	c.path = path
 }
 
 func (c *Context) GetPath() string {
@@ -46,6 +50,8 @@ func New(path string, logger *slog.Logger) *Context {
 type CTX interface {
 	//update the current path of the application
 	UpdatePath(string)
+	//update the current path of the application
+	AppendPath(string)
 	//get the current path of the application
 	GetPath() string
 	//update the application status
