@@ -88,7 +88,7 @@ func initialModel() model {
 		log.Fatal(err)
 	}
 
-	return model{
+	return model {
 		cwd: cwd,
 		ctx: ctx,
 	}

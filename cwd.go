@@ -21,17 +21,22 @@ type Cwd struct {
 	backend  backend.Backend
 
 	ctx context.CTX
+
+	selectedItem int
 }
 
 func (c *Cwd) moveForward() error {
+	c.selectedItem = c.Children.GlobalIndex()
+
 	item, ok := c.Children.SelectedItem().(FileType)
+
 	if !ok {
 		return errors.New("Could Not Select Item!")
 	}
 	if item.Kind != Directory {
 		return errors.New("The Item is Not a Directory!")
 	}
-	c.ctx.UpdatePath(item.Name)
+	c.ctx.AppendPath(item.Name)
 	return c.populateChildren()
 }
 
@@ -60,7 +65,13 @@ func (c *Cwd) compressSelected() error {
 	}
 
 	//TODO: this blocks do something about it
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	c.ctx.UpdateStatus("Compression Successful!")
+	//redraw ui
+	return c.populateChildren()
 }
 
 func (c *Cwd) markItem() error {
@@ -90,6 +101,8 @@ func (c *Cwd) populateChildren() error {
 		items = append(items, NewFileType(child.Name(), filepath.Join(c.ctx.GetPath(), child.Name()), child.IsDir()))
 	}
 	_ = c.Children.SetItems(items)
+
+	c.Children.Select(c.selectedItem)
 	return nil
 }
 
@@ -108,8 +121,10 @@ func NewCwd(ctx context.CTX) (*Cwd, error) {
 		Children: list,
 		marktree: marktree,
 
-		backend: backend.NewZip(marktree,ctx),
+		backend: backend.NewZip(marktree, ctx),
 		ctx:     ctx,
+
+		selectedItem: 0,
 	}
 	if err := c.populateChildren(); err != nil {
 		return nil, err
