@@ -1,6 +1,9 @@
 package utils
 
-import "math/rand"
+import (
+	"math/rand"
+	"os/exec"
+)
 
 const CharacterPool = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -14,3 +17,8 @@ func RandString(n int) string {
 	return string(b)
 }
 
+
+func IsInstalled(name string) bool {
+	_,err := exec.LookPath(name)
+	return err != nil
+}
