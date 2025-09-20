@@ -6,6 +6,7 @@ import (
 
 	"github.com/suryaaprakassh/comprosaur/command"
 	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/utils"
 )
 
 type Zip struct {
@@ -36,12 +37,12 @@ func (c *Zip) Compress(verbose bool, np NameProvider) (*exec.Cmd, error) {
 	if verbose {
 		cmd.Arg("-v")
 	}
-	//removes junk path
-	cmd.Arg("-j")
+
 	if haveDir {
 		cmd.Arg("-r")
 		cmd.Args(dirs...)
 	}
+
 	if haveFile {
 		cmd.Args(files...)
 	}
@@ -49,9 +50,14 @@ func (c *Zip) Compress(verbose bool, np NameProvider) (*exec.Cmd, error) {
 }
 
 func (c *Zip) EnsureInstallFatal() {
-
+	if !utils.IsInstalled("zip") {
+		panic("Zip is not installed!")
+	}
 }
 
 func (c *Zip) EnsureInstalled() error {
+	if !utils.IsInstalled("zip") {
+		return fmt.Errorf("Zip is not installed!")
+	}
 	return nil
 }
