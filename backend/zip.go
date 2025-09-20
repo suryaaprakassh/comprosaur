@@ -5,33 +5,39 @@ import (
 	"os/exec"
 
 	"github.com/suryaaprakassh/comprosaur/command"
+	"github.com/suryaaprakassh/comprosaur/context"
 )
 
 type Zip struct {
 	provider SourceProvider
+
+	ctx context.CTX
 }
 
-func NewZip(provider SourceProvider) *Zip {
+func NewZip(provider SourceProvider, ctx context.CTX) *Zip {
 	return &Zip{
 		provider: provider,
+		ctx:      ctx,
 	}
 }
 
 func (c *Zip) Compress(verbose bool, np NameProvider) (*exec.Cmd, error) {
-	dirs, haveDir := c.provider.GetMarkedDirs()
-	files, haveFile := c.provider.GetMarkedFiles()
+	dirs, haveDir := c.provider.GetMarkedDirs(c.ctx.GetPath(), true)
+	files, haveFile := c.provider.GetMarkedFiles(c.ctx.GetPath(), true)
 
 	if !haveFile && !haveDir {
 		return nil, NoFileSelected
 	}
 
-	name := fmt.Sprintf("%s.zip",np())
+	name := fmt.Sprintf("%s.zip", np())
 	cmd := command.New("zip")
 	cmd.Arg(name)
 
 	if verbose {
 		cmd.Arg("-v")
 	}
+	//removes junk path
+	cmd.Arg("-j")
 	if haveDir {
 		cmd.Arg("-r")
 		cmd.Args(dirs...)
@@ -45,7 +51,6 @@ func (c *Zip) Compress(verbose bool, np NameProvider) (*exec.Cmd, error) {
 func (c *Zip) EnsureInstallFatal() {
 
 }
-
 
 func (c *Zip) EnsureInstalled() error {
 	return nil

@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/logger"
 )
 
 const listHeight = 40
@@ -24,7 +27,7 @@ var (
 
 type model struct {
 	cwd    *Cwd
-	status string
+	ctx  context.CTX
 }
 
 func (m model) Init() tea.Cmd {
@@ -32,20 +35,20 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) View() string {
-	s := fmt.Sprintf("DIR: %s\n\n", m.cwd.path)
+	s := fmt.Sprintf("DIR: %s\n\n", m.ctx.GetPath())
 	s += m.cwd.Children.View()
-	s += fmt.Sprintf("\n\nSTATUS: %s\n", m.status)
+	s += fmt.Sprintf("\n\nSTATUS: %s\n", m.ctx.GetStatus())
 	return s
 }
 
 func (m model) handleErrorCall(fn func() error) {
 	if err := fn(); err != nil {
-		m.status = err.Error()
+		m.ctx.UpdateStatus(err.Error())
 	}
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	m.status = ""
+	m.ctx.ResetStatus()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.cwd.Children.SetWidth(msg.Width)
@@ -71,12 +74,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func initialModel() model {
-	cwd, err := NewCwd()
+	path ,err := os.Getwd()
+
+	if err != nil {
+		panic("ERROR: "+err.Error())
+	}
+
+	logger := logger.New()
+	ctx := context.New(path,logger)
+
+	cwd, err := NewCwd(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return model{
 		cwd: cwd,
+		ctx: ctx,
 	}
 }

@@ -27,6 +27,14 @@ type Backend interface {
 }
 
 type SourceProvider interface {
-	GetMarkedDirs() ([]string, bool)
-	GetMarkedFiles() ([]string, bool)
+	// gets the relative path of the dirs from the current dir
+	// basepath - base path of the current dir
+	// isRelative - if  relative path is needed
+	//         base path is optional if its not relative
+	GetMarkedDirs(basepath string, isRelative bool) ([]string, bool)
+	// gets the relative path of the dirs from the current dir
+	// basepath - base path of the current dir
+	// isRelative- if  relative path is needed
+	//         base path is optional if its not relative
+	GetMarkedFiles(basepath string, isRelative bool) ([]string, bool)
 }

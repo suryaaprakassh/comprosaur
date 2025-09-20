@@ -19,7 +19,7 @@ func Dfs(node *Node, results *[]string, path string, is_dir bool) {
 	}
 	for p, child := range node.children {
 		if !child.IsUnmark() {
-			Dfs(child, results, filepath.Join(path, p),is_dir)
+			Dfs(child, results, filepath.Join(path, p), is_dir)
 		}
 	}
 }
@@ -169,17 +169,43 @@ func (t *Tree) ToggleFile(path string) error {
 	return nil
 }
 
-//returns true if there is a dir marked
-func (t *Tree) GetMarkedDirs() ([]string, bool) {
+// returns true if there is a dir marked
+// if isRelative is false , then basepath is optional
+// empty string can be passed
+func (t *Tree) GetMarkedDirs(basepath string, isRelative bool) ([]string, bool) {
 	paths := make([]string, 0)
 	Dfs(t.root, &paths, "/", true)
+
+	if isRelative {
+		for idx, path := range paths {
+			relPath, err := filepath.Rel(basepath, path)
+			if err != nil {
+				log.Fatal("Relative Path Convertsion Failed:", err.Error())
+			}
+			paths[idx] = relPath
+		}
+	}
+
 	return paths, (len(paths) > 0)
 }
 
-//returns true if there is a file marked
-func (t *Tree) GetMarkedFiles() ([]string, bool) {
+// returns true if there is a file marked
+// if isRelative is false , then basepath is optional
+// empty string can be passed
+func (t *Tree) GetMarkedFiles(basepath string,isRelative bool) ([]string, bool) {
 	paths := make([]string, 0)
 	Dfs(t.root, &paths, "/", false)
+
+	if isRelative {
+		for idx, path := range paths {
+			relPath, err := filepath.Rel(basepath, path)
+			if err != nil {
+				log.Fatal("Relative Path Convertsion Failed:", err.Error())
+			}
+			paths[idx] = relPath
+		}
+	}
+
 	return paths, (len(paths) > 0)
 }
 

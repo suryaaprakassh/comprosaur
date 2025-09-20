@@ -9,7 +9,7 @@ var logger *slog.Logger
 
 //TODO: single threaded impl 
 // make it thread safe
-func GetLogger() *slog.Logger {
+func New() *slog.Logger {
 	if logger != nil {
 		return logger
 	}

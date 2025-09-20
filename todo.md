@@ -1,4 +1,6 @@
 - [x]  Fix tests coupled with dir
+- [ ]  Have UI when getting compressed
+- [ ]  Refresh when compressed
 - [ ]  Set cursor when moving back
 - [ ]  Change the help menu
 - [ ]  View without extraction

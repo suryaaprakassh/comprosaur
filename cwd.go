@@ -2,25 +2,25 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/suryaaprakassh/comprosaur/backend"
+	"github.com/suryaaprakassh/comprosaur/context"
 	"github.com/suryaaprakassh/comprosaur/marktree"
 	"github.com/suryaaprakassh/comprosaur/utils"
 )
 
 type Cwd struct {
-	path     string
 	Children list.Model
-	length   int
 
 	//tree to track mark status
 	marktree *marktree.Tree
 	backend  backend.Backend
+
+	ctx context.CTX
 }
 
 func (c *Cwd) moveForward() error {
@@ -31,18 +31,18 @@ func (c *Cwd) moveForward() error {
 	if item.Kind != Directory {
 		return errors.New("The Item is Not a Directory!")
 	}
-
-	c.path = fmt.Sprintf("%s/%s", c.path, item.Name)
-
+	c.ctx.UpdatePath(item.Name)
 	return c.populateChildren()
 }
 
 func (c *Cwd) moveBack() error {
-	index := strings.LastIndex(c.path, "/")
+	path := c.ctx.GetPath()
+
+	index := strings.LastIndex(path, "/")
 	if index == 0 {
 		return errors.New("Cannot Move Back!")
 	}
-	c.path = c.path[:index]
+	c.ctx.UpdatePath(path[:index])
 
 	return c.populateChildren()
 }
@@ -50,15 +50,15 @@ func (c *Cwd) moveBack() error {
 func (c *Cwd) compressSelected() error {
 
 	np := func() string {
-		return filepath.Join(c.path, utils.RandString(5))
+		return filepath.Join(c.ctx.GetPath(), utils.RandString(5))
 	}
 	//TODO: have a state for verbose
 	//default set to true
-	cmd , err := c.backend.Compress(true,np)
+	cmd, err := c.backend.Compress(true, np)
 	if err != nil {
 		return err
 	}
-	
+
 	//TODO: this blocks do something about it
 	return cmd.Run()
 }
@@ -82,25 +82,19 @@ func (c *Cwd) markItem() error {
 
 func (c *Cwd) populateChildren() error {
 	items := []list.Item{}
-	files, err := os.ReadDir(c.path)
+	files, err := os.ReadDir(c.ctx.GetPath())
 	if err != nil {
 		return err
 	}
 	for _, child := range files {
-		items = append(items, NewFileType(child.Name(), filepath.Join(c.path, child.Name()), child.IsDir()))
+		items = append(items, NewFileType(child.Name(), filepath.Join(c.ctx.GetPath(), child.Name()), child.IsDir()))
 	}
 	_ = c.Children.SetItems(items)
 	return nil
 }
 
-func NewCwd() (*Cwd, error) {
-	path, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
+func NewCwd(ctx context.CTX) (*Cwd, error) {
 	marktree := marktree.NewTree()
-
 	list := list.New(nil, itemDelegate{
 		marktree: marktree,
 	}, 20, 14)
@@ -111,12 +105,11 @@ func NewCwd() (*Cwd, error) {
 	list.Styles.PaginationStyle = paginationStyle
 	list.Styles.HelpStyle = helpStyle
 	c := &Cwd{
-		path:     path,
-		length:   0,
 		Children: list,
 		marktree: marktree,
 
-		backend: backend.NewZip(marktree),
+		backend: backend.NewZip(marktree,ctx),
+		ctx:     ctx,
 	}
 	if err := c.populateChildren(); err != nil {
 		return nil, err

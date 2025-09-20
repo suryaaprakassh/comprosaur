@@ -1,9 +1,11 @@
 package backend
 
 import (
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/suryaaprakassh/comprosaur/context"
 	"github.com/suryaaprakassh/comprosaur/utils"
 )
 
@@ -12,11 +14,11 @@ type MockSourceProvider struct {
 	files []string
 }
 
-func (t *MockSourceProvider) GetMarkedDirs() ([]string, bool) {
+func (t *MockSourceProvider) GetMarkedDirs(basespath string, isRelative bool) ([]string, bool) {
 	return t.dirs, len(t.dirs) > 0
 }
 
-func (t *MockSourceProvider) GetMarkedFiles() ([]string, bool) {
+func (t *MockSourceProvider) GetMarkedFiles(basespath string, isRelative bool) ([]string, bool) {
 	return t.files, len(t.files) > 0
 }
 
@@ -32,7 +34,10 @@ func NewTestSourceProvider() *MockSourceProvider {
 }
 
 func TestZip(t *testing.T) {
-	zip := NewZip(NewTestSourceProvider())
+	logger := slog.Default()
+	ctx := context.New("/",logger)
+
+	zip := NewZip(NewTestSourceProvider(),ctx)
 	_, err := zip.Compress(false, MockNameProvider)
 	assert.NoError(t, err)
 	// err = cmd.Run()
