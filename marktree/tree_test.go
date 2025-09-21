@@ -1,15 +1,23 @@
 package marktree
 
 import (
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/suryaaprakassh/comprosaur/context"
 	"github.com/suryaaprakassh/comprosaur/utils"
 )
 
+func GetTestContext() context.CTX {
+	logger := slog.Default()
+	return context.New("/",logger)
+}
+
 
 func TestTree(t *testing.T) {
-	tree := NewTree()
+	ctx := GetTestContext()
+	tree := NewTree(ctx)
 	dirs := []string{
 		"/foo/boo",
 		"/foo/bar/baz",
@@ -43,7 +51,8 @@ func TestTree(t *testing.T) {
 }
 
 func TestMarkDrop(t *testing.T) {
-	tree := NewTree()
+	ctx := GetTestContext()
+	tree := NewTree(ctx)
 	dirs := []string{
 		"/foo/bar/baz",
 		"/foo/bar",
@@ -63,13 +72,16 @@ func TestMarkDrop(t *testing.T) {
 	}
 
 	tree.ToggleDir(tDir.Get("/foo"))
+	markedDirs,_ := tree.GetMarkedDirs("",false)
+	ctx.Logger().Info("GOT","paths",markedDirs)
 
 	p := tDir.Get(files[0])
-	assert.Equal(t, true, tree.IsMarked(p))
+	assert.Equal(t, true , tree.IsMarked(p))
 }
 
 func TestInternalDrop(t *testing.T) {
-	tree := NewTree()
+	ctx := GetTestContext()
+	tree := NewTree(ctx)
 
 	files := []string{"a", "b", "c"}
 
@@ -89,7 +101,8 @@ func TestInternalDrop(t *testing.T) {
 }
 
 func TestInternalDropDir(t *testing.T) {
-	tree := NewTree()
+	ctx := GetTestContext()
+	tree := NewTree(ctx)
 
 	dirs := []string{"a", "b", "c"}
 
@@ -110,7 +123,8 @@ func TestInternalDropDir(t *testing.T) {
 }
 
 func TestMarkedReturn(t *testing.T) {
-	tree := NewTree()
+	ctx := GetTestContext()
+	tree := NewTree(ctx)
 	dirs := []string{
 		"/foo/boo",
 		"/foo/bar",

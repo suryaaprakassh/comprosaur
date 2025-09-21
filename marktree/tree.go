@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/suryaaprakassh/comprosaur/context"
 	"github.com/suryaaprakassh/comprosaur/stack"
 )
 
@@ -26,6 +27,8 @@ func Dfs(node *Node, results *[]string, path string, is_dir bool) {
 
 type Tree struct {
 	root *Node
+
+	ctx context.CTX
 }
 
 func (t *Tree) IsStatus(path string, status MarkedStatus) bool {
@@ -46,6 +49,7 @@ func (t *Tree) IsStatus(path string, status MarkedStatus) bool {
 
 func (t *Tree) IsMarked(path string) bool {
 	n := t.root
+	logger := t.ctx.Logger()
 	for key := range strings.SplitSeq(path, "/") {
 		if key == "" {
 			continue
@@ -53,10 +57,12 @@ func (t *Tree) IsMarked(path string) bool {
 		node, ok := n.children[key]
 		if ok {
 			n = node
+			logger.Info("GOT","path",key,"status",node.status.String())
 			if n.is_dir && n.IsMarked() {
 				return true
 			}
 		} else {
+			logger.Info("FUCKED","path",key)
 			return false
 		}
 	}
@@ -66,6 +72,7 @@ func (t *Tree) IsMarked(path string) bool {
 func (t *Tree) ToggleDir(path string) error {
 	n := t.root
 	s := stack.New[*Node]()
+
 
 	currPath := "/"
 	for key := range strings.SplitSeq(path, "/") {
@@ -84,7 +91,7 @@ func (t *Tree) ToggleDir(path string) error {
 			n, _ = n.children[key]
 		}
 	}
-
+	
 	parent, err := s.Top()
 	if err != nil {
 		return err
@@ -96,14 +103,15 @@ func (t *Tree) ToggleDir(path string) error {
 		return err
 	}
 
-	path = filepath.Dir(path)
-	n = *parent
-	s.Pop()
-
 	//drop the children if the entire directory gets marked
 	if n.IsMarked() {
 		n.current_count = n.item_count
+		clear(n.children)
 	}
+
+	path = filepath.Dir(path)
+	n = *parent
+	s.Pop()
 
 	//recursively set the status of the tree
 	// for partial status
@@ -209,11 +217,12 @@ func (t *Tree) GetMarkedFiles(basepath string,isRelative bool) ([]string, bool) 
 	return paths, (len(paths) > 0)
 }
 
-func NewTree() *Tree {
+func NewTree(ctx context.CTX) *Tree {
 	//Creating tree with root dir
 	//TODO: change later
 	t := &Tree{
 		root: NewNode(true),
+		ctx: ctx,
 	}
 
 	dirs, err := os.ReadDir("/")

@@ -107,7 +107,7 @@ func (c *Cwd) populateChildren() error {
 }
 
 func NewCwd(ctx context.CTX) (*Cwd, error) {
-	marktree := marktree.NewTree()
+	marktree := marktree.NewTree(ctx)
 	list := list.New(nil, itemDelegate{
 		marktree: marktree,
 	}, 20, 14)
