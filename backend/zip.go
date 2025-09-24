@@ -36,7 +36,7 @@ func (c *Zip) Compress(verbose bool, np NameProvider) (*exec.Cmd, error) {
 	cmd.Arg(name)
 
 	if verbose {
-		cmd.Arg("-v")
+		cmd.Arg("-o")
 	}
 
 	if haveDir {
@@ -75,8 +75,6 @@ func (c *Zip) Extract(verbose bool, np NameProvider) (*exec.Cmd, error) {
 
 	return cmd.Build(), nil
 }
-
-
 
 
 func (c *Zip) EnsureInstallFatal() {
