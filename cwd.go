@@ -93,6 +93,7 @@ func (c *Cwd) compressSelected() error {
 	}
 
 	c.ctx.AppendStatus("Compression Successful!")
+	c.ctx.RefreshStatus()
 	//redraw ui
 	return c.populateChildren()
 }

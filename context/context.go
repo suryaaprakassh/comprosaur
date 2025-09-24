@@ -3,7 +3,11 @@ package context
 import (
 	"log/slog"
 	"path/filepath"
+	"time"
 )
+
+const STATUS_RESET_TIME = 400 * time.Millisecond
+
 
 type Context struct {
 	path   string
@@ -30,14 +34,25 @@ func (c *Context) AppendStatus(status string) {
 
 func (c *Context) UpdateStatus(status string) {
 	c.status = status
+	c.RefreshStatus()
 }
 
 func (c *Context) GetStatus() string {
 	return c.status
 }
 
+
 func (c *Context) ResetStatus() {
 	c.status = ""
+
+	//INVESTIGATE: ui is not redrawn when status is reset until user presses a button 
+}
+
+func (c *Context) RefreshStatus() {
+	time.AfterFunc(STATUS_RESET_TIME,func ()  {
+		c.Logger().Debug("UI","Cleared status after",STATUS_RESET_TIME)
+		c.ResetStatus()	
+	})
 }
 
 func (c *Context) Logger() *slog.Logger {
@@ -65,6 +80,8 @@ type CTX interface {
 	GetStatus() string
 	//resets the application status
 	ResetStatus()
+	//refreshes the status after the set amount of time 
+	RefreshStatus()
 	//gets default logger of the application
 	Logger() *slog.Logger
 }
