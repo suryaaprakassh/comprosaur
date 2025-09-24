@@ -49,7 +49,6 @@ func (t *Tree) IsStatus(path string, status MarkedStatus) bool {
 
 func (t *Tree) IsMarked(path string) bool {
 	n := t.root
-	logger := t.ctx.Logger()
 	for key := range strings.SplitSeq(path, "/") {
 		if key == "" {
 			continue
@@ -57,12 +56,10 @@ func (t *Tree) IsMarked(path string) bool {
 		node, ok := n.children[key]
 		if ok {
 			n = node
-			logger.Info("GOT","path",key,"status",node.status.String())
 			if n.is_dir && n.IsMarked() {
 				return true
 			}
 		} else {
-			logger.Info("FUCKED","path",key)
 			return false
 		}
 	}

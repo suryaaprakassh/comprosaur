@@ -48,7 +48,7 @@ func (m model) handleErrorCall(fn func() error) {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	m.ctx.ResetStatus()
+	// m.ctx.ResetStatus()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.cwd.Children.SetWidth(msg.Width)
@@ -66,6 +66,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleErrorCall(m.cwd.markItem)
 		case "c":
 			m.handleErrorCall(m.cwd.compressSelected)
+		case "e":
+			m.handleErrorCall(m.cwd.extractSelected)
 		}
 	}
 	var cmd tea.Cmd

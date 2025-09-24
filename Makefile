@@ -7,4 +7,7 @@ run: build
 test:
 	@ gotestsum --format testname 
 
+clean:
+	@ rm -rf *.zip comp.log
+
 .PHONY: test run build

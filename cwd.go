@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"os"
 	"path/filepath"
@@ -54,14 +55,36 @@ func (c *Cwd) moveBack() error {
 
 func (c *Cwd) compressSelected() error {
 
-	np := func() string {
-		return filepath.Join(c.ctx.GetPath(), utils.RandString(5))
-	}
 	//TODO: have a state for verbose
 	//default set to true
-	cmd, err := c.backend.Compress(true, np)
+	verbose := true
+
+	np := func() string {
+		return utils.RandString(5)
+	}
+	cmd, err := c.backend.Compress(verbose, np)
 	if err != nil {
 		return err
+	}
+
+	//streaming to the status of the ui
+	//TODO: fix this
+	if verbose {
+		c.ctx.Logger().Info("Started Verbose streaming!")
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return err
+		}
+		cmd.Stderr = cmd.Stdout
+
+		go func() {
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				line := scanner.Text()
+				c.ctx.AppendStatus(line+"\n")
+				c.ctx.Logger().Info(line)
+			}
+		}()
 	}
 
 	//TODO: this blocks do something about it
@@ -69,7 +92,7 @@ func (c *Cwd) compressSelected() error {
 		return err
 	}
 
-	c.ctx.UpdateStatus("Compression Successful!")
+	c.ctx.AppendStatus("Compression Successful!")
 	//redraw ui
 	return c.populateChildren()
 }
@@ -104,6 +127,29 @@ func (c *Cwd) populateChildren() error {
 
 	c.Children.Select(c.selectedItem)
 	return nil
+}
+
+func (c *Cwd) extractSelected() error {
+	//TODO: have a state for verbose
+	//default set to true
+	verbose := true
+
+	//TODO: change the name provider for the zip
+	cmd, err := c.backend.Extract(verbose,func() string {
+		return "test"
+	})
+	if err != nil {
+		return err
+	}
+
+	//TODO: this blocks do something about it
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	c.ctx.UpdateStatus("Extraction Successful!")
+	//redraw ui
+	return c.populateChildren()
 }
 
 func NewCwd(ctx context.CTX) (*Cwd, error) {

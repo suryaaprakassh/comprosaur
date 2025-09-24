@@ -24,6 +24,10 @@ func (c *Context) GetPath() string {
 	return c.path
 }
 
+func (c *Context) AppendStatus(status string) {
+	c.status += status 
+}
+
 func (c *Context) UpdateStatus(status string) {
 	c.status = status
 }
@@ -56,11 +60,11 @@ type CTX interface {
 	GetPath() string
 	//update the application status
 	UpdateStatus(string)
+	AppendStatus(string)
 	//get the application status for rendering
 	GetStatus() string
 	//resets the application status
 	ResetStatus()
-
 	//gets default logger of the application
 	Logger() *slog.Logger
 }

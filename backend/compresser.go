@@ -9,6 +9,8 @@ import (
 type NameProvider func() string
 
 var NoFileSelected = errors.New("No File Selected!")
+var DirectoriesSelected = errors.New("Directories cannot be extracted!")
+var MoreFilesSelected = errors.New("More than 1 file is selected!")
 
 type Compresser interface {
 	Compress(verbose bool, np NameProvider) (*exec.Cmd, error)
@@ -19,6 +21,13 @@ type Compresser interface {
 }
 
 type Extractor interface {
+	Extract(verbose bool,np NameProvider) (*exec.Cmd,error)
+
+
+	EnsureInstalled() error
+	//should crash if not installed
+	EnsureInstallFatal()
+
 }
 
 type Backend interface {

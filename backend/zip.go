@@ -29,8 +29,9 @@ func (c *Zip) Compress(verbose bool, np NameProvider) (*exec.Cmd, error) {
 	if !haveFile && !haveDir {
 		return nil, NoFileSelected
 	}
-
-	name := fmt.Sprintf("%s.zip", np())
+	
+	//TODO: split the name provider and take the path from the ctx
+	name := fmt.Sprintf("%s/%s.zip",c.ctx.GetPath(), np())
 	cmd := command.New("zip")
 	cmd.Arg(name)
 
@@ -46,8 +47,37 @@ func (c *Zip) Compress(verbose bool, np NameProvider) (*exec.Cmd, error) {
 	if haveFile {
 		cmd.Args(files...)
 	}
+
 	return cmd.Build(), nil
 }
+
+
+func (c *Zip) Extract(verbose bool, np NameProvider) (*exec.Cmd, error) {
+	_ , haveDir := c.provider.GetMarkedDirs(c.ctx.GetPath(), true)
+	files, haveFile := c.provider.GetMarkedFiles(c.ctx.GetPath(), true)
+
+	if haveDir {
+		return nil, DirectoriesSelected
+	}
+
+	if !haveFile {
+		return nil , NoFileSelected
+	}
+
+	if len(files) > 1 { 
+		return nil, MoreFilesSelected
+	}
+	path := fmt.Sprintf("%s/%s",c.ctx.GetPath(),np())
+	cmd := command.New("unzip")
+	cmd.Arg(files[0])
+	cmd.Arg("-d")
+	cmd.Arg(path)
+
+	return cmd.Build(), nil
+}
+
+
+
 
 func (c *Zip) EnsureInstallFatal() {
 	if !utils.IsInstalled("zip") {
