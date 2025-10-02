@@ -31,6 +31,10 @@ type Tree struct {
 	ctx context.CTX
 }
 
+func (t *Tree) Clear() {
+	t.root.Clear()
+}
+
 func (t *Tree) IsStatus(path string, status MarkedStatus) bool {
 	n := t.root
 	for key := range strings.SplitSeq(path, "/") {

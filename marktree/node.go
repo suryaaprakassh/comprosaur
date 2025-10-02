@@ -130,6 +130,11 @@ func (n *Node) Repopulate(path string) error {
 	return nil
 }
 
+func (n *Node) Clear() {
+	n.status = Unmarked
+	clear(n.children)
+}
+
 func (n *Node) AddChild(name string, is_dir bool, path string) *Node {
 	child := NewNode(is_dir)
 	n.children[name] = child

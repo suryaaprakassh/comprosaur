@@ -27,10 +27,7 @@ type Cwd struct {
 }
 
 func (c *Cwd) moveForward() error {
-	c.selectedItem = c.Children.GlobalIndex()
-
 	item, ok := c.Children.SelectedItem().(FileType)
-
 	if !ok {
 		return errors.New("Could Not Select Item!")
 	}
@@ -43,7 +40,6 @@ func (c *Cwd) moveForward() error {
 
 func (c *Cwd) moveBack() error {
 	path := c.ctx.GetPath()
-
 	index := strings.LastIndex(path, "/")
 	if index == 0 {
 		return errors.New("Cannot Move Back!")
@@ -102,16 +98,42 @@ func (c *Cwd) markItem() error {
 	index := c.Children.GlobalIndex()
 	item, ok := c.Children.SelectedItem().(FileType)
 
+	if !ok {
+		return errors.New("Could Not Select Item!")
+	}
+
 	if item.Kind == File {
 		c.marktree.ToggleFile(item.Path)
 	} else {
 		c.marktree.ToggleDir(item.Path)
 	}
 
+	c.Children.SetItem(index, item)
+	return nil
+}
+
+func (c *Cwd) clearChildren() error {
+	c.marktree.Clear()
+	return nil
+}
+
+func (c *Cwd) selectChildren() error {
+	item, ok := c.Children.SelectedItem().(FileType)
+
 	if !ok {
 		return errors.New("Could Not Select Item!")
 	}
-	c.Children.SetItem(index, item)
+
+	path := filepath.Dir(item.Path)
+	
+	if path == "" {
+		//TODO: fix later make sure select all works for root dir
+		c.ctx.UpdateStatus("Cannot Select All at the root dir! will fix later!")
+		return nil
+	}
+
+	c.marktree.ToggleDir(path)
+		
 	return nil
 }
 
@@ -125,8 +147,6 @@ func (c *Cwd) populateChildren() error {
 		items = append(items, NewFileType(child.Name(), filepath.Join(c.ctx.GetPath(), child.Name()), child.IsDir()))
 	}
 	_ = c.Children.SetItems(items)
-
-	c.Children.Select(c.selectedItem)
 	return nil
 }
 

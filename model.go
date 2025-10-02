@@ -68,6 +68,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleErrorCall(m.cwd.compressSelected)
 		case "e":
 			m.handleErrorCall(m.cwd.extractSelected)
+		case "d":
+			m.handleErrorCall(m.cwd.clearChildren)
+		case "a":
+			m.handleErrorCall(m.cwd.selectChildren)
 		}
 	}
 	var cmd tea.Cmd
