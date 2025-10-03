@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -35,10 +36,11 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) View() string {
-	s := fmt.Sprintf("DIR: %s\n\n", m.ctx.GetPath())
-	s += m.cwd.Children.View()
-	s += fmt.Sprintf("\n\nSTATUS: %s\n", m.ctx.GetStatus())
-	return s
+	s := strings.Builder{}
+	s.WriteString(fmt.Sprintf("DIR: %s\n\n", m.ctx.GetPath()))
+	s.WriteString(m.cwd.Children.View())
+	s.WriteString(fmt.Sprintf("\n\nSTATUS: %s\n", m.ctx.GetStatus()))
+	return s.String()
 }
 
 func (m model) handleErrorCall(fn func() error) {
