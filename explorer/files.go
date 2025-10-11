@@ -1,4 +1,4 @@
-package main
+package explorer
 
 type FileKind int
 

@@ -1,103 +1,63 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"strings"
 
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/explorer"
 	"github.com/suryaaprakassh/comprosaur/logger"
 )
 
-const listHeight = 40
-
-var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#feb129"))
-	markedItemStyle   = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#3399ff"))
-	partialItemStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#ff79c6"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-)
+type ModalState int 
 
 type model struct {
-	cwd    *Cwd
-	ctx  context.CTX
+	ctx context.CTX
+	
+	explorer tea.Model
+	popup tea.Model
 }
 
 func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) View() string {
-	s := strings.Builder{}
-	s.WriteString(fmt.Sprintf("DIR: %s\n\n", m.ctx.GetPath()))
-	s.WriteString(m.cwd.Children.View())
-	s.WriteString(fmt.Sprintf("\n\nSTATUS: %s\n", m.ctx.GetStatus()))
-	return s.String()
+func (m *model) SetModal(modal tea.Model) {
+	m.popup = modal
 }
 
-func (m model) handleErrorCall(fn func() error) {
-	if err := fn(); err != nil {
-		m.ctx.UpdateStatus(err.Error())
-	}
+func (m model) View() string {
+	return m.explorer.View()	
 }
+
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// m.ctx.ResetStatus()
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.cwd.Children.SetWidth(msg.Width)
-		m.cwd.Children.SetHeight(msg.Height - 6)
-		return m, nil
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q":
-			return m, tea.Quit
-		case "l":
-			m.handleErrorCall(m.cwd.moveForward)
-		case "h":
-			m.handleErrorCall(m.cwd.moveBack)
-		case "m":
-			m.handleErrorCall(m.cwd.markItem)
-		case "c":
-			m.handleErrorCall(m.cwd.compressSelected)
-		case "e":
-			m.handleErrorCall(m.cwd.extractSelected)
-		case "d":
-			m.handleErrorCall(m.cwd.clearChildren)
-		case "a":
-			m.handleErrorCall(m.cwd.selectChildren)
-		}
-	}
-	var cmd tea.Cmd
-	m.cwd.Children, cmd = m.cwd.Children.Update(msg)
+	newModel , cmd  := m.explorer.Update(msg)
+	m.explorer = newModel
 	return m, cmd
 }
 
 func initialModel() model {
-	path ,err := os.Getwd()
+	path, err := os.Getwd()
 
 	if err != nil {
-		panic("ERROR: "+err.Error())
+		panic("ERROR: " + err.Error())
 	}
 
 	logger := logger.New()
-	ctx := context.New(path,logger)
+	ctx := context.New(path, logger)
 
-	cwd, err := NewCwd(ctx)
+	cwd, err := explorer.NewCwd(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return model {
-		cwd: cwd,
+	return model{
 		ctx: ctx,
+
+		explorer: explorer.InitialModel(cwd,ctx),
+
+		popup: NewTestModal(),
 	}
 }
