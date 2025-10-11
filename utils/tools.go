@@ -22,3 +22,9 @@ func IsInstalled(name string) bool {
 	_,err := exec.LookPath(name)
 	return err != nil
 }
+
+func PanicOnError(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
+}
