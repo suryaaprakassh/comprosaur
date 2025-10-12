@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/shared"
 	"github.com/suryaaprakassh/comprosaur/utils"
 )
 
-func GetTestContext() context.CTX {
+func GetTestContext() shared.CTX {
 	logger := slog.Default()
-	return context.New("/",logger)
+	return shared.New("/",logger)
 }
 
 

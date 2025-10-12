@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/shared"
 	"github.com/suryaaprakassh/comprosaur/utils"
 )
 
@@ -24,11 +24,9 @@ var (
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
-type ModalState int 
-
 type model struct {
 	cwd *Cwd
-	ctx context.CTX
+	ctx shared.CTX
 }
 
 func (m model) Init() tea.Cmd {
@@ -78,6 +76,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleErrorCall(m.cwd.clearChildren)
 		case "a":
 			m.handleErrorCall(m.cwd.selectChildren)
+		//TODO: remove added for testing
+		case "t":
 		}
 	}
 	var cmd tea.Cmd
@@ -86,7 +86,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 
-func InitialModel(cwd *Cwd,ctx context.CTX ) model {
+func InitialModel(cwd *Cwd,ctx shared.CTX) model {
 	return model{
 		cwd: cwd,
 		ctx: ctx,

@@ -5,18 +5,19 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/shared"
 	"github.com/suryaaprakassh/comprosaur/explorer"
 	"github.com/suryaaprakassh/comprosaur/logger"
 )
 
-type ModalState int 
 
 type model struct {
-	ctx context.CTX
+	ctx shared.CTX
 	
 	explorer tea.Model
 	popup tea.Model
+
+	state shared.ModalState
 }
 
 func (m model) Init() tea.Cmd {
@@ -33,9 +34,13 @@ func (m model) View() string {
 
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	newModel , cmd  := m.explorer.Update(msg)
-	m.explorer = newModel
-	return m, cmd
+		newModel , cmd  := m.explorer.Update(msg)
+		m.explorer = newModel
+		return m, cmd
+}
+
+func (m *model) ChangeState(state shared.ModalState) {
+	m.state = state
 }
 
 func initialModel() model {
@@ -46,7 +51,7 @@ func initialModel() model {
 	}
 
 	logger := logger.New()
-	ctx := context.New(path, logger)
+	ctx := shared.New(path, logger)
 
 	cwd, err := explorer.NewCwd(ctx)
 	if err != nil {
@@ -57,7 +62,8 @@ func initialModel() model {
 		ctx: ctx,
 
 		explorer: explorer.InitialModel(cwd,ctx),
-
 		popup: NewTestModal(),
+
+		state: shared.Explorer,
 	}
 }

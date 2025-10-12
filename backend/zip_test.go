@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/shared"
 	"github.com/suryaaprakassh/comprosaur/utils"
 )
 
@@ -35,7 +35,7 @@ func NewTestSourceProvider() *MockSourceProvider {
 
 func TestZip(t *testing.T) {
 	logger := slog.Default()
-	ctx := context.New("/",logger)
+	ctx := shared.New("/",logger)
 
 	zip := NewZip(NewTestSourceProvider(),ctx)
 	_, err := zip.Compress(false, MockNameProvider)

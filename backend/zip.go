@@ -5,17 +5,17 @@ import (
 	"os/exec"
 
 	"github.com/suryaaprakassh/comprosaur/command"
-	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/shared"
 	"github.com/suryaaprakassh/comprosaur/utils"
 )
 
 type Zip struct {
 	provider SourceProvider
 
-	ctx context.CTX
+	ctx shared.CTX
 }
 
-func NewZip(provider SourceProvider, ctx context.CTX) *Zip {
+func NewZip(provider SourceProvider, ctx shared.CTX) *Zip {
 	return &Zip{
 		provider: provider,
 		ctx:      ctx,

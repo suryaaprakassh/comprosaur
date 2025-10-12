@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/shared"
 	"github.com/suryaaprakassh/comprosaur/stack"
 )
 
@@ -28,7 +28,7 @@ func Dfs(node *Node, results *[]string, path string, is_dir bool) {
 type Tree struct {
 	root *Node
 
-	ctx context.CTX
+	ctx shared.CTX
 }
 
 func (t *Tree) Clear() {
@@ -218,7 +218,7 @@ func (t *Tree) GetMarkedFiles(basepath string,isRelative bool) ([]string, bool) 
 	return paths, (len(paths) > 0)
 }
 
-func NewTree(ctx context.CTX) *Tree {
+func NewTree(ctx shared.CTX) *Tree {
 	//Creating tree with root dir
 	//TODO: change later
 	t := &Tree{

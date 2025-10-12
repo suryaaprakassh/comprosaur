@@ -9,7 +9,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/suryaaprakassh/comprosaur/backend"
-	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/shared"
 	"github.com/suryaaprakassh/comprosaur/marktree"
 	"github.com/suryaaprakassh/comprosaur/utils"
 )
@@ -21,7 +21,7 @@ type Cwd struct {
 	marktree *marktree.Tree
 	backend  backend.Backend
 
-	ctx context.CTX
+	ctx shared.CTX
 
 	selectedItem int
 }
@@ -173,7 +173,7 @@ func (c *Cwd) extractSelected() error {
 	return c.populateChildren()
 }
 
-func NewCwd(ctx context.CTX) (*Cwd, error) {
+func NewCwd(ctx shared.CTX) (*Cwd, error) {
 	marktree := marktree.NewTree(ctx)
 	list := list.New(nil, itemDelegate{
 		marktree: marktree,

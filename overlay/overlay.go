@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/suryaaprakassh/comprosaur/context"
+	"github.com/suryaaprakassh/comprosaur/shared"
 	ansi "github.com/charmbracelet/x/ansi"
 )
 
@@ -28,7 +28,7 @@ func getLines(content string) ([]string, int) {
 // takes in the forground and background model and the position of the
 // foreground model in the background model
 // returns a error if something breaks
-func Overlay(ctx context.CTX, foreground, background string, pos_x, pos_y int) (string, error) {
+func Overlay(ctx shared.CTX, foreground, background string, pos_x, pos_y int) (string, error) {
 	fLines, fWidth:= getLines(foreground)
 	bLines, bWidth := getLines(background)
 
